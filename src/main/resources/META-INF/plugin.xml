@@ -15,4 +15,11 @@
         <listener class="com.github.mekhails.intellijvoicerecognitionplugin.listeners.MyProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
+    <actions>
+        <action id="com.github.mekhails.intellijvoicerecognitionplugin.actions.CallActionThroughSearcher"
+                class="com.github.mekhails.intellijvoicerecognitionplugin.actions.CallActionThroughSearcher"
+                text="Call Action Through Searcher">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
 </idea-plugin>
