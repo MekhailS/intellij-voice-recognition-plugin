@@ -14,14 +14,22 @@ plugins {
     id("org.jetbrains.changelog") version "1.3.1"
     // Gradle Qodana Plugin
     id("org.jetbrains.qodana") version "0.1.13"
+
+    id ("application")
 }
 
 group = properties("pluginGroup")
 version = properties("pluginVersion")
 
-// Configure project's dependencies
+
 repositories {
     mavenCentral()
+
+    // for spinx
+    mavenLocal()
+    maven {
+        url = uri("https://oss.sonatype.org/content/repositories/snapshots")
+    }
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
@@ -47,6 +55,14 @@ qodana {
     saveReport.set(true)
     showReport.set(System.getenv("QODANA_SHOW_REPORT")?.toBoolean() ?: false)
 }
+
+dependencies {
+    implementation("net.java.dev.jna:jna:5.7.0")
+    implementation("com.alphacephei:vosk:0.3.32+")
+    implementation("edu.cmu.sphinx:sphinx4-core:5prealpha-SNAPSHOT")
+    implementation("edu.cmu.sphinx:sphinx4-data:5prealpha-SNAPSHOT")
+}
+
 
 tasks {
     // Set the JVM compatibility versions
