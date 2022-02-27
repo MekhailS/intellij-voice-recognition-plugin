@@ -20,27 +20,31 @@ internal class MyProjectManagerListener : ProjectManagerListener {
     override fun projectOpened(project: Project) {
         project.service<MyProjectService>()
 
-        System.out.println("START")
+//        System.out.println("START")
+//
+//        val configuration = Configuration()
+//        configuration.setAcousticModelPath("resource:/edu/cmu/sphinx/models/en-us/en-us")
+//        configuration.setDictionaryPath("resource:/edu/cmu/sphinx/models/en-us/cmudict-en-us.dict")
+//        configuration.setLanguageModelPath("resource:/edu/cmu/sphinx/models/en-us/en-us.lm.bin")
+//
+//        val recognizer = StreamSpeechRecognizer(configuration)
+//        val stream: InputStream = FileInputStream(File("D:\\dsl_project\\intellij-voice-recognition-plugin\\test.wav"))
+//        recognizer.startRecognition(stream)
+//        var result: SpeechResult?
+//        var i = 1
+//        while (recognizer.result.also { result = it } != null) {
+//            System.out.println("iteration + " + i++)
+//            if (result != null) {
+//                System.out.format("Hypothesis: %s\n", result!!.hypothesis)
+//            }
+//        }
+//        recognizer.stopRecognition()
+//
+//        System.out.println("END")
 
-        val configuration = Configuration()
-        configuration.setAcousticModelPath("resource:/edu/cmu/sphinx/models/en-us/en-us")
-        configuration.setDictionaryPath("resource:/edu/cmu/sphinx/models/en-us/cmudict-en-us.dict")
-        configuration.setLanguageModelPath("resource:/edu/cmu/sphinx/models/en-us/en-us.lm.bin")
-        val recognizer = StreamSpeechRecognizer(configuration)
-        val stream: InputStream = FileInputStream(File("test.wav"))
-        recognizer.startRecognition(stream)
-        var result: SpeechResult?
-        var i = 1
-        while (recognizer.result.also { result = it } != null) {
-            System.out.println("iteration + " + i++)
-            if (result != null) {
-                System.out.format("Hypothesis: %s\n", result!!.hypothesis)
-            }
-        }
-        recognizer.stopRecognition()
 
-        System.out.println("END")
-
+//        System.out.println("START")
+//
 //        Model("D:\\dsl_project\\intellij-voice-recognition-plugin\\model").use { model ->
 //            AudioSystem.getAudioInputStream(BufferedInputStream(FileInputStream("D:\\dsl_project\\intellij-voice-recognition-plugin\\test.wav")))
 //                .use { ais ->
@@ -58,5 +62,7 @@ internal class MyProjectManagerListener : ProjectManagerListener {
 //                    }
 //                }
 //        }
+//
+//        System.out.println("END")
     }
 }
