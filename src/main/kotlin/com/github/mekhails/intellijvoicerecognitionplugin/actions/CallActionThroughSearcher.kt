@@ -7,11 +7,18 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.progress.runBackgroundableTask
 import edu.cmu.sphinx.api.Configuration
 import edu.cmu.sphinx.api.LiveSpeechRecognizer
+import edu.cmu.sphinx.api.Microphone
 import edu.cmu.sphinx.api.SpeechResult
 import edu.cmu.sphinx.api.StreamSpeechRecognizer
+import org.vosk.LibVosk
+import org.vosk.LogLevel
+import org.vosk.Model
+import org.vosk.Recognizer
+import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
+import javax.sound.sampled.AudioSystem
 
 
 class CallActionThroughSearcher : AnAction() {
@@ -25,15 +32,34 @@ class CallActionThroughSearcher : AnAction() {
 //            val operationSearcher = ActionSearcher(e.project, e.dataContext.getData(CommonDataKeys.EDITOR))
 //            operationSearcher.searchAction("Commit", progressIndicator)?.invoke()
 //        }
-//        recognizeLiveSpeech()
-        recognizeSpeechFromFile("rename_file.wav")
+        //recognizeLiveSpeech()
+        //recognizeSpeechFromFile("rename_file.wav")
+        LibVosk.setLogLevel(LogLevel.DEBUG)
+        val model = Model("/Users/Mikhail.Shagvaliev/Downloads/vosk-model-en-us-0.22-lgraph")
+        val inputStream = AudioSystem.getAudioInputStream(BufferedInputStream(FileInputStream(
+            "/Users/Mikhail.Shagvaliev/IdeaProjects/intellij-voice-recognition-plugin/test.wav"
+        )))
+        val recognizer = Recognizer(model, 16000F)
+
+        val microphoneStream = Microphone(16000F, 16, true, false).stream
+
+        var nbytes: Int
+        val bytes = ByteArray(4096)
+        while (microphoneStream.read(bytes).also { nbytes = it } >= -1) {
+            if (recognizer.acceptWaveForm(bytes, nbytes))
+                println("RESULT: ${recognizer.result}")
+            else
+                println("PARTIAL RESULT ${recognizer.partialResult}")
+        }
+        println("FINAL RESULT ${recognizer.finalResult}")
     }
 
     private fun recognizeLiveSpeech() {
         val configuration = Configuration()
-        configuration.setAcousticModelPath("resource:/edu/cmu/sphinx/models/en-us/en-us")
+        //configuration.setAcousticModelPath("resource:/edu/cmu/sphinx/models/en-us/en-us")
+        configuration.acousticModelPath = "file:/Users/Mikhail.Shagvaliev/Downloads/cmusphinx-en-us-8khz-5.2"
         configuration.setDictionaryPath("resource:/edu/cmu/sphinx/models/en-us/cmudict-en-us.dict")
-        configuration.setLanguageModelPath("resource:/edu/cmu/sphinx/models/en-us/en-us.lm.bin")
+        configuration.setLanguageModelPath("file:/Users/Mikhail.Shagvaliev/Downloads/cmusphinx-en-us-8khz-5.2")
 
         val recognizer = LiveSpeechRecognizer(configuration)
         // Start recognition process pruning previously cached data.
@@ -65,7 +91,7 @@ class CallActionThroughSearcher : AnAction() {
         configuration.setLanguageModelPath("resource:/edu/cmu/sphinx/models/en-us/en-us.lm.bin")
 
         val recognizer = StreamSpeechRecognizer(configuration)
-        val stream: InputStream = FileInputStream(File("D:\\dsl_project\\intellij-voice-recognition-plugin\\$file"))
+        val stream: InputStream = FileInputStream(File("/Users/Mikhail.Shagvaliev/IdeaProjects/intellij-voice-recognition-plugin/$file"))
         recognizer.startRecognition(stream)
         var result: SpeechResult?
         var i = 1
