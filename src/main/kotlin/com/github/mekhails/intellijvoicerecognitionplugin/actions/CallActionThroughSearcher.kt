@@ -1,24 +1,13 @@
 package com.github.mekhails.intellijvoicerecognitionplugin.actions
 
-import com.github.mekhails.intellijvoicerecognitionplugin.searcher.ActionSearcher
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.progress.runBackgroundableTask
-import edu.cmu.sphinx.api.Configuration
-import edu.cmu.sphinx.api.LiveSpeechRecognizer
-import edu.cmu.sphinx.api.Microphone
-import edu.cmu.sphinx.api.SpeechResult
-import edu.cmu.sphinx.api.StreamSpeechRecognizer
 import org.vosk.LibVosk
 import org.vosk.LogLevel
 import org.vosk.Model
 import org.vosk.Recognizer
-import java.io.BufferedInputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.InputStream
-import javax.sound.sampled.AudioSystem
+import java.io.*
+import javax.sound.sampled.*
 
 
 class CallActionThroughSearcher : AnAction() {
@@ -32,20 +21,21 @@ class CallActionThroughSearcher : AnAction() {
 //            val operationSearcher = ActionSearcher(e.project, e.dataContext.getData(CommonDataKeys.EDITOR))
 //            operationSearcher.searchAction("Commit", progressIndicator)?.invoke()
 //        }
-        //recognizeLiveSpeech()
-        //recognizeSpeechFromFile("rename_file.wav")
+
+        readFromMicro()
+    }
+
+    private fun readFromFile() {
         LibVosk.setLogLevel(LogLevel.DEBUG)
-        val model = Model("/Users/Mikhail.Shagvaliev/Downloads/vosk-model-en-us-0.22-lgraph")
+        val model = Model("vosk-model-en-us-0.22-lgraph")
         val inputStream = AudioSystem.getAudioInputStream(BufferedInputStream(FileInputStream(
-            "/Users/Mikhail.Shagvaliev/IdeaProjects/intellij-voice-recognition-plugin/test.wav"
+            "test.wav"
         )))
         val recognizer = Recognizer(model, 16000F)
 
-        val microphoneStream = Microphone(16000F, 16, true, false).stream
-
         var nbytes: Int
         val bytes = ByteArray(4096)
-        while (microphoneStream.read(bytes).also { nbytes = it } >= -1) {
+        while (inputStream.read(bytes).also { nbytes = it } >= 0) {
             if (recognizer.acceptWaveForm(bytes, nbytes))
                 println("RESULT: ${recognizer.result}")
             else
@@ -54,56 +44,43 @@ class CallActionThroughSearcher : AnAction() {
         println("FINAL RESULT ${recognizer.finalResult}")
     }
 
-    private fun recognizeLiveSpeech() {
-        val configuration = Configuration()
-        //configuration.setAcousticModelPath("resource:/edu/cmu/sphinx/models/en-us/en-us")
-        configuration.acousticModelPath = "file:/Users/Mikhail.Shagvaliev/Downloads/cmusphinx-en-us-8khz-5.2"
-        configuration.setDictionaryPath("resource:/edu/cmu/sphinx/models/en-us/cmudict-en-us.dict")
-        configuration.setLanguageModelPath("file:/Users/Mikhail.Shagvaliev/Downloads/cmusphinx-en-us-8khz-5.2")
 
-        val recognizer = LiveSpeechRecognizer(configuration)
-        // Start recognition process pruning previously cached data.
-        recognizer.startRecognition(true)
+    private fun readFromMicro() {
+        LibVosk.setLogLevel(LogLevel.DEBUG)
 
-        System.out.println("START")
+        val format = AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 60000F, 16, 2, 4, 44100F, false)
+        val info = DataLine.Info(TargetDataLine::class.java, format)
+        var microphone: TargetDataLine
 
-        var result: SpeechResult?
-        var i = 1
-        while (recognizer.result.also { result = it } != null) {
-            System.out.println("iteration + " + i++)
-            if (result != null) {
-                System.out.format("Hypothesis: %s\n", result!!.hypothesis)
+        Model("vosk-model-en-us-0.22-lgraph").use { model ->
+            Recognizer(model, 120000F).use { recognizer ->
+                try {
+                    microphone = AudioSystem.getLine(info) as TargetDataLine
+                    microphone.open(format)
+                    microphone.start()
+                    val out = ByteArrayOutputStream()
+                    var numBytesRead: Int
+                    val CHUNK_SIZE = 1024
+                    var bytesRead = 0
+                    var maxBytes = CHUNK_SIZE * 1000
+                    val b = ByteArray(4096)
+                    println("START OF RECOGNITION")
+                    while (bytesRead <= maxBytes) {
+                        numBytesRead = microphone.read(b, 0, CHUNK_SIZE)
+                        bytesRead += numBytesRead
+                        out.write(b, 0, numBytesRead)
+                        if (recognizer.acceptWaveForm(b, numBytesRead)) {
+                            println(recognizer.result)
+                        } else {
+                            println(recognizer.partialResult)
+                        }
+                    }
+                    println("END OF RECOGNITION")
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
-
-        // Pause recognition process. It can be resumed then with startRecognition(false).
-        recognizer.stopRecognition()
-
-        System.out.println("END")
-    }
-
-    private fun recognizeSpeechFromFile (file: String) {
-        System.out.println("START")
-
-        val configuration = Configuration()
-        configuration.setAcousticModelPath("resource:/edu/cmu/sphinx/models/en-us/en-us")
-        configuration.setDictionaryPath("resource:/edu/cmu/sphinx/models/en-us/cmudict-en-us.dict")
-        configuration.setLanguageModelPath("resource:/edu/cmu/sphinx/models/en-us/en-us.lm.bin")
-
-        val recognizer = StreamSpeechRecognizer(configuration)
-        val stream: InputStream = FileInputStream(File("/Users/Mikhail.Shagvaliev/IdeaProjects/intellij-voice-recognition-plugin/$file"))
-        recognizer.startRecognition(stream)
-        var result: SpeechResult?
-        var i = 1
-        while (recognizer.result.also { result = it } != null) {
-            System.out.println("iteration + " + i++)
-            if (result != null) {
-                System.out.format("Hypothesis: %s\n", result!!.hypothesis)
-            }
-        }
-        recognizer.stopRecognition()
-
-        System.out.println("END")
     }
 
 }
