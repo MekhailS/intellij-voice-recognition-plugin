@@ -2,6 +2,7 @@ package com.github.mekhails.intellijvoicerecognitionplugin.services
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.runBackgroundableTask
+import org.json.JSONObject
 import org.vosk.Model
 import org.vosk.Recognizer
 import java.io.*
@@ -11,6 +12,7 @@ import javax.sound.sampled.*
 
 
 private const val DAFAULT_MODEL = "/Users/Mikhail.Shagvaliev/Downloads/vosk-model-en-us-0.22-lgraph"
+///home/viktor/IdeaProjects/intellij-voice-recognition-plugin/vosk-model-en-us-0.22-lgraph
 
 class VoiceRecognizer : Disposable {
     val isActive: Boolean
@@ -47,8 +49,8 @@ class VoiceRecognizer : Disposable {
         voiceModelFuture.whenComplete { voiceModel, _ ->
             if (!voiceModel.isActive.compareAndSet(true, false))
                 return@whenComplete
-            voiceRecognition.whenComplete { voiceRecognitionCompleted, _ ->
-                callBack(voiceRecognitionCompleted)
+            voiceRecognition.whenComplete { recognizedCommands, _ ->
+                // TODO Misha
             }
         }
     }
@@ -61,7 +63,6 @@ class VoiceRecognizer : Disposable {
                 try {
                     voiceModel.microphone.open(voiceModel.format)
                     voiceModel.microphone.start()
-                    val out = ByteArrayOutputStream()
                     var numBytesRead: Int
                     val chunkSize = 2048 * 1
                     var bytesRead = 0
@@ -69,30 +70,17 @@ class VoiceRecognizer : Disposable {
                     val b = ByteArray(chunkSize)
                     voiceModel.recognizer.reset()
 
-                    val dataLineInfo = DataLine.Info(SourceDataLine::class.java, voiceModel.format)
-                    val speakers = AudioSystem.getLine(dataLineInfo) as SourceDataLine
-                    speakers.open(voiceModel.format)
-                    speakers.start()
-
                     while (bytesRead <= maxBytes && !voiceModel.exit.get() && voiceModel.isActive.get()) {
                         numBytesRead = voiceModel.microphone.read(b, 0, chunkSize)
                         bytesRead += numBytesRead
-                        out.write(b, 0, numBytesRead)
                         voiceModel.recognizer.acceptWaveForm(b, numBytesRead)
                         with(voiceModel.recognizer) {
-                            println(partialResult)
-                            println(finalResult)
-                            println(result)
+                            val result = JSONObject(partialResult).getString("partial")
+                            if (result.isNotBlank()) {
+                                voiceRecognition.complete(result)
+                            }
                         }
-                        speakers.write(b, 0, numBytesRead)
-                        println(voiceModel.recognizer.partialResult)
-//                        val result = JSONObject(voiceModel.recognizer.partialResult).getString("partial")
-//                        if (result.isNotBlank()) {
-//                            voiceRecognition.complete(result)
-//                        }
                     }
-                    speakers.drain()
-                    speakers.close()
                     voiceModel.microphone.close()
                     voiceModel.isActive.set(false)
                 } catch (e: Exception) {
