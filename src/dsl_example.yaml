@@ -1,0 +1,15 @@
+actions:
+  - id: "stop_and_run"
+    nestedActions:
+      - id: "stop"
+      - id: "run"
+
+  - id: "stop"
+    actionString: "CANONICAL_PATH_TO_STOP_ACTION"
+
+  - id: "run"
+    actionString: "CANONICAL_PATH_TO_RUN_ACTION"
+
+voiceCommands:
+  - phrase: "stop and run"
+    actionId: "stop_and_run"

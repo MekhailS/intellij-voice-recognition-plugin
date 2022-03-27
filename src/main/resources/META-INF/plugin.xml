@@ -22,5 +22,11 @@
                     keymap="$default"
                     first-keystroke="control alt G"/>
         </action>
+        </action>
+        <group id="com.github.mekhails.intellijvoicerecognitionplugin.actions.LoadDSLActionGroup"
+               class="com.github.mekhails.intellijvoicerecognitionplugin.actions.LoadDSLActionGroup"
+               text="Open Voice Recognition DSL">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </group>
     </actions>
 </idea-plugin>
