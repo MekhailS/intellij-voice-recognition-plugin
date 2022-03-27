@@ -61,6 +61,7 @@ dependencies {
     implementation("com.alphacephei:vosk:0.3.32+")
     implementation("edu.cmu.sphinx:sphinx4-core:5prealpha-SNAPSHOT")
     implementation("edu.cmu.sphinx:sphinx4-data:5prealpha-SNAPSHOT")
+    implementation("org.json:json:20171018")
 }
 
 

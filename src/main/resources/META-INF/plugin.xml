@@ -7,19 +7,20 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="com.github.mekhails.intellijvoicerecognitionplugin.services.MyApplicationService"/>
-        <projectService serviceImplementation="com.github.mekhails.intellijvoicerecognitionplugin.services.MyProjectService"/>
+        <applicationService serviceImplementation="com.github.mekhails.intellijvoicerecognitionplugin.services.VoiceRecognizer"/>
+        <projectService serviceImplementation="com.github.mekhails.intellijvoicerecognitionplugin.services.VoiceRecognizer"/>
     </extensions>
 
     <applicationListeners>
-        <listener class="com.github.mekhails.intellijvoicerecognitionplugin.listeners.MyProjectManagerListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
     <actions>
         <action id="com.github.mekhails.intellijvoicerecognitionplugin.actions.CallActionThroughSearcher"
                 class="com.github.mekhails.intellijvoicerecognitionplugin.actions.CallActionThroughSearcher"
                 text="Call Action Through Searcher">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <keyboard-shortcut
+                    keymap="$default"
+                    first-keystroke="control alt G"/>
         </action>
     </actions>
 </idea-plugin>

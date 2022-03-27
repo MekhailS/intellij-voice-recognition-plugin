@@ -1,7 +1,11 @@
 package com.github.mekhails.intellijvoicerecognitionplugin.actions
 
+import com.github.mekhails.intellijvoicerecognitionplugin.services.VoiceRecognizer
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.DumbAwareAction
 import org.vosk.LibVosk
 import org.vosk.LogLevel
 import org.vosk.Model
@@ -10,7 +14,7 @@ import java.io.*
 import javax.sound.sampled.*
 
 
-class CallActionThroughSearcher : AnAction() {
+class CallActionThroughSearcher : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
         if (e.project == null)
             e.presentation.isEnabledAndVisible = false
@@ -46,41 +50,8 @@ class CallActionThroughSearcher : AnAction() {
 
 
     private fun readFromMicro() {
-        LibVosk.setLogLevel(LogLevel.DEBUG)
-
-        val format = AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 60000F, 16, 2, 4, 44100F, false)
-        val info = DataLine.Info(TargetDataLine::class.java, format)
-        var microphone: TargetDataLine
-
-        Model("vosk-model-en-us-0.22-lgraph").use { model ->
-            Recognizer(model, 120000F).use { recognizer ->
-                try {
-                    microphone = AudioSystem.getLine(info) as TargetDataLine
-                    microphone.open(format)
-                    microphone.start()
-                    val out = ByteArrayOutputStream()
-                    var numBytesRead: Int
-                    val CHUNK_SIZE = 1024
-                    var bytesRead = 0
-                    var maxBytes = CHUNK_SIZE * 1000
-                    val b = ByteArray(4096)
-                    println("START OF RECOGNITION")
-                    while (bytesRead <= maxBytes) {
-                        numBytesRead = microphone.read(b, 0, CHUNK_SIZE)
-                        bytesRead += numBytesRead
-                        out.write(b, 0, numBytesRead)
-                        if (recognizer.acceptWaveForm(b, numBytesRead)) {
-                            println(recognizer.result)
-                        } else {
-                            println(recognizer.partialResult)
-                        }
-                    }
-                    println("END OF RECOGNITION")
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
+        val voiceRecognizer = service<VoiceRecognizer>()
+        voiceRecognizer.changeJobStatus()
     }
 
 }
