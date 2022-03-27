@@ -25,24 +25,23 @@ class CallActionThroughSearcher : DumbAwareAction() {
 
         if (!voiceRecognizer.isActive) {
             voiceRecognizer.startRecognition()
-        } else {
-            voiceRecognizer.endRecognition { recognizedString ->
-                val actionPhrases = currentConfiguration.phrasesToActionStrings.keys
+            return
+        }
+        voiceRecognizer.endRecognition { recognizedString ->
+            val actionPhrases = currentConfiguration.phrasesToActionStrings.keys
 
-                val bestMatchedActionPhrase = actionPhrases.maxByOrNull { actionPhrase ->
-                    RecognizedStringMatcher(recognizedString, actionPhrase).matchRate
-                } ?: return@endRecognition
+            val bestMatch = actionPhrases.map { actionPhrase
+                -> RecognizedStringMatcher(recognizedString, actionPhrase)
+            }.maxByOrNull { it.matchRate } ?: return@endRecognition
 
-                val matchingRate = RecognizedStringMatcher(recognizedString, bestMatchedActionPhrase).matchRate
-                if (matchingRate == 0F) return@endRecognition
+            if (bestMatch.matchRate < 0.5F) return@endRecognition
 
-                val actionStringsToPerform = currentConfiguration.phrasesToActionStrings[bestMatchedActionPhrase] ?: return@endRecognition
+            val actionStringsToPerform = currentConfiguration.phrasesToActionStrings[bestMatch.actionPhrase] ?: return@endRecognition
 
-                runBackgroundableTask("Performing actions", null, false) { indicator ->
-                    val actionSearcher = ActionSearcher(e.project, e.dataContext.getData(CommonDataKeys.EDITOR))
-                    actionStringsToPerform.forEach { actionString ->
-                        actionSearcher.searchAction(actionString, indicator)?.invoke()
-                    }
+            runBackgroundableTask("Performing actions", null, false) { indicator ->
+                val actionSearcher = ActionSearcher(e.project, e.dataContext.getData(CommonDataKeys.EDITOR))
+                actionStringsToPerform.forEach { actionString ->
+                    actionSearcher.searchAction(actionString, indicator)?.invoke()
                 }
             }
         }

@@ -17,10 +17,10 @@ class RecognizedStringMatcher(
     }
 
     private fun matchWords(recognizedWord: String, actionWord: String) : Float {
+        if (recognizedWord.isBlank()) return 0F
         val longestCommonSubstringLength = computeLongestCommonSubstringLength(recognizedWord, actionWord)
-        if (longestCommonSubstringLength == 0) return 0F
 
-        return recognizedWord.length.toFloat() / longestCommonSubstringLength.toFloat()
+        return longestCommonSubstringLength.toFloat() / recognizedWord.length.toFloat()
     }
 
     private fun computeLongestCommonSubstringLength(strA: String, strB: String): Int {

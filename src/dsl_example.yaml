@@ -7,7 +7,7 @@ actions:
     actionString: "rename file"
 
   - id: "commit"
-    actionString: "commit"
+    actionString: "Commit..."
 
   - id: "run"
     actionString: "CANONICAL_PATH_TO_RUN_ACTION"
