@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import org.json.JSONObject
 import org.vosk.Model
 import org.vosk.Recognizer
-import java.io.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.sound.sampled.*
@@ -19,11 +18,11 @@ class VoiceRecognizer : Disposable {
         get() = voiceModelFuture.getNow(null)?.isActive?.get() ?: false
 
     private class VoiceModel {
-        var model = Model(DAFAULT_MODEL)
-        val format = AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 60000F, 16, 2, 4, 44100F, false)
+        val model = Model(DAFAULT_MODEL)
+        val format = AudioFormat(160000F, 16, 1, true, false)
         val info = DataLine.Info(TargetDataLine::class.java, format)
         val microphone: TargetDataLine = AudioSystem.getLine(info) as TargetDataLine
-        val recognizer: Recognizer = Recognizer(model, 120000F)
+        val recognizer: Recognizer = Recognizer(model, 160000F)
 
         val isActive = AtomicBoolean(false)
         val exit = AtomicBoolean(false)
@@ -45,12 +44,12 @@ class VoiceRecognizer : Disposable {
         }
     }
 
-    fun endRecognition(callBack: (String) -> Unit) {
+    fun endRecognition(actionOnRecognizedString: (String) -> Unit) {
         voiceModelFuture.whenComplete { voiceModel, _ ->
             if (!voiceModel.isActive.compareAndSet(true, false))
                 return@whenComplete
-            voiceRecognition.whenComplete { recognizedCommands, _ ->
-                // TODO Misha
+            voiceRecognition.whenComplete { voiceRecognitionCompleted, _ ->
+                actionOnRecognizedString(voiceRecognitionCompleted)
             }
         }
     }
@@ -64,11 +63,16 @@ class VoiceRecognizer : Disposable {
                     voiceModel.microphone.open(voiceModel.format)
                     voiceModel.microphone.start()
                     var numBytesRead: Int
-                    val chunkSize = 2048 * 1
+                    val chunkSize = 2048 * 2
                     var bytesRead = 0
-                    var maxBytes = 100000000
+                    val maxBytes = 100000000
                     val b = ByteArray(chunkSize)
                     voiceModel.recognizer.reset()
+
+                    val dataLineInfo = DataLine.Info(SourceDataLine::class.java, voiceModel.format)
+                    val speakers = AudioSystem.getLine(dataLineInfo) as SourceDataLine
+                    speakers.open(voiceModel.format)
+                    speakers.start()
 
                     while (bytesRead <= maxBytes && !voiceModel.exit.get() && voiceModel.isActive.get()) {
                         numBytesRead = voiceModel.microphone.read(b, 0, chunkSize)
@@ -81,6 +85,8 @@ class VoiceRecognizer : Disposable {
                             }
                         }
                     }
+                    speakers.drain()
+                    speakers.close()
                     voiceModel.microphone.close()
                     voiceModel.isActive.set(false)
                 } catch (e: Exception) {
