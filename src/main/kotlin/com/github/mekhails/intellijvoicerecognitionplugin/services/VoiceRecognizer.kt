@@ -2,113 +2,88 @@ package com.github.mekhails.intellijvoicerecognitionplugin.services
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.runBackgroundableTask
-import org.json.JSONObject
 import org.vosk.Model
 import org.vosk.Recognizer
 import java.io.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicLong
 import javax.sound.sampled.*
+
 
 private const val DAFAULT_MODEL = "/home/viktor/IdeaProjects/intellij-voice-recognition-plugin/vosk-model-en-us-0.22-lgraph"
 
 class VoiceRecognizer : Disposable {
+    val isActive: Boolean
+        get() = voiceModelFuture.getNow(null)?.isActive?.get() ?: false
+
     private class VoiceModel {
         var model = Model(DAFAULT_MODEL)
         val format = AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 60000F, 16, 2, 4, 44100F, false)
         val info = DataLine.Info(TargetDataLine::class.java, format)
         val microphone: TargetDataLine = AudioSystem.getLine(info) as TargetDataLine
-        val isActive = AtomicLong(-1)
+        val recognizer: Recognizer = Recognizer(model, 120000F)
+
+        val isActive = AtomicBoolean(false)
         val exit = AtomicBoolean(false)
     }
 
     private val voiceModelFuture = CompletableFuture<VoiceModel>()
 
+    private val voiceRecognition = CompletableFuture<String>()
+
     init {
-        runBackgroundableTask("tt", null, false) { _ -> voiceModelFuture.complete(VoiceModel()) }
-        startRecognition()
+        runBackgroundableTask("Loading Model", null, false) { _ -> voiceModelFuture.complete(VoiceModel()) }
     }
 
     override fun dispose() {
         voiceModelFuture.whenComplete { voiceModel, _ ->
             voiceModel.exit.set(true)
+            voiceModel.recognizer.close()
+            voiceModel.model.close()
         }
     }
 
-    fun changeJobStatus() {
+    fun endRecognition(callBack: (String) -> Unit) {
         voiceModelFuture.whenComplete { voiceModel, _ ->
-            voiceModel.isActive.getAndIncrement();
-        }
-    }
-
-    private fun isActive(): Boolean {
-        return voiceModelFuture.thenApply { voiceModel ->
-            voiceModel.isActive.get() % 2 == 0L
-        }.getNow(false)
-    }
-
-    private fun startRecognition2() {
-        voiceModelFuture.whenComplete { voiceModel, _ ->
-            voiceModel.model.use {
-                Recognizer(it, 120000F).use { recognizer ->
-                    try {
-                        voiceModel.microphone.open(voiceModel.format)
-                        voiceModel.microphone.start()
-                        val out = ByteArrayOutputStream()
-                        var numBytesRead: Int
-                        val CHUNK_SIZE = 1024
-                        var bytesRead = 0
-                        var maxBytes = 100000000
-                        val b = ByteArray(4096)
-                        while (bytesRead <= maxBytes && !voiceModel.exit.get() && isActive()) {
-                            numBytesRead = voiceModel.microphone.read(b, 0, CHUNK_SIZE)
-                            bytesRead += numBytesRead
-                            out.write(b, 0, numBytesRead)
-                            recognizer.acceptWaveForm(b, numBytesRead)
-//                                    println(recognizer.finalResult)
-                            val result = JSONObject(recognizer.finalResult).getString("text")
-                            if (result.isNotBlank()) {
-                                println(result)
-                            }
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
+            if (!voiceModel.isActive.compareAndSet(true, false))
+                return@whenComplete
+            voiceRecognition.whenComplete { voiceRecognitionCompleted, _ ->
+                callBack(voiceRecognitionCompleted)
             }
         }
     }
 
-    private fun startRecognition() {
+    fun startRecognition() {
         voiceModelFuture.whenComplete { voiceModel, _ ->
-            runBackgroundableTask("e", null, false) {
-                voiceModel.model.use {
-                    Recognizer(it, 120000F).use { recognizer ->
-                        try {
-                            voiceModel.microphone.open(voiceModel.format)
-                            voiceModel.microphone.start()
-                            val out = ByteArrayOutputStream()
-                            var numBytesRead: Int
-                            val CHUNK_SIZE = 1024
-                            var bytesRead = 0
-                            var maxBytes = 100000000
-                            val b = ByteArray(4096)
-                            while (bytesRead <= maxBytes && !voiceModel.exit.get() && isActive()) {
-                                numBytesRead = voiceModel.microphone.read(b, 0, CHUNK_SIZE)
-                                bytesRead += numBytesRead
-                                out.write(b, 0, numBytesRead)
-                                recognizer.acceptWaveForm(b, numBytesRead)
-//                                    println(recognizer.finalResult)
-                                val result = JSONObject(recognizer.finalResult).getString("text")
-                                if (result.isNotBlank()) {
-                                    println(result)
-                                }
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
+            if (!voiceModel.isActive.compareAndSet(false, true))
+                return@whenComplete
+            runBackgroundableTask("Start Recognition", null, false) {
+                try {
+                    voiceModel.microphone.open(voiceModel.format)
+                    voiceModel.microphone.start()
+                    val out = ByteArrayOutputStream()
+                    var numBytesRead: Int
+                    val chunkSize = 2048 * 1
+                    var bytesRead = 0
+                    var maxBytes = 100000000
+                    val b = ByteArray(chunkSize)
+                    voiceModel.recognizer.reset()
+
+                    while (bytesRead <= maxBytes && !voiceModel.exit.get() && voiceModel.isActive.get()) {
+                        numBytesRead = voiceModel.microphone.read(b, 0, chunkSize)
+                        bytesRead += numBytesRead
+                        out.write(b, 0, numBytesRead)
+                        voiceModel.recognizer.acceptWaveForm(b, numBytesRead)
+                        println(voiceModel.recognizer.partialResult)
+//                        val result = JSONObject(voiceModel.recognizer.partialResult).getString("partial")
+//                        if (result.isNotBlank()) {
+//                            voiceRecognition.complete(result)
+//                        }
                     }
+                    voiceModel.microphone.close();
+                    voiceModel.isActive.set(false)
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
             }
         }

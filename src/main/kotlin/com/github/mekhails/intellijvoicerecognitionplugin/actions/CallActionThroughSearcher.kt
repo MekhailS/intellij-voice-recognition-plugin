@@ -26,32 +26,33 @@ class CallActionThroughSearcher : DumbAwareAction() {
 //            operationSearcher.searchAction("Commit", progressIndicator)?.invoke()
 //        }
 
-        readFromMicro()
-    }
-
-    private fun readFromFile() {
-        LibVosk.setLogLevel(LogLevel.DEBUG)
-        val model = Model("vosk-model-en-us-0.22-lgraph")
-        val inputStream = AudioSystem.getAudioInputStream(BufferedInputStream(FileInputStream(
-            "test.wav"
-        )))
-        val recognizer = Recognizer(model, 16000F)
-
-        var nbytes: Int
-        val bytes = ByteArray(4096)
-        while (inputStream.read(bytes).also { nbytes = it } >= 0) {
-            if (recognizer.acceptWaveForm(bytes, nbytes))
-                println("RESULT: ${recognizer.result}")
-            else
-                println("PARTIAL RESULT ${recognizer.partialResult}")
-        }
-        println("FINAL RESULT ${recognizer.finalResult}")
-    }
-
-
-    private fun readFromMicro() {
         val voiceRecognizer = service<VoiceRecognizer>()
-        voiceRecognizer.changeJobStatus()
+
+        if (!voiceRecognizer.isActive) {
+            voiceRecognizer.startRecognition()
+        } else {
+            voiceRecognizer.endRecognition { s -> println(s) }
+        }
     }
+
+//    private fun readFromFile() {
+//        LibVosk.setLogLevel(LogLevel.DEBUG)
+//        val model = Model("vosk-model-en-us-0.22-lgraph")
+//        val inputStream = AudioSystem.getAudioInputStream(BufferedInputStream(FileInputStream(
+//            "test.wav"
+//        )))
+//        val recognizer = Recognizer(model, 16000F)
+//
+//        var nbytes: Int
+//        val bytes = ByteArray(4096)
+//        while (inputStream.read(bytes).also { nbytes = it } >= 0) {
+//            if (recognizer.acceptWaveForm(bytes, nbytes))
+//                println("RESULT: ${recognizer.result}")
+//            else
+//                println("PARTIAL RESULT ${recognizer.partialResult}")
+//        }
+//        println("FINAL RESULT ${recognizer.finalResult}")
+//    }
+
 
 }
