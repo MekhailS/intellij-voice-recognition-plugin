@@ -15,4 +15,16 @@
         <listener class="com.github.mekhails.intellijvoicerecognitionplugin.listeners.MyProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
+    <actions>
+        <action id="com.github.mekhails.intellijvoicerecognitionplugin.actions.CallActionThroughSearcher"
+                class="com.github.mekhails.intellijvoicerecognitionplugin.actions.CallActionThroughSearcher"
+                text="Call Action Through Searcher">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+        <group id="com.github.mekhails.intellijvoicerecognitionplugin.actions.LoadDSLActionGroup"
+               class="com.github.mekhails.intellijvoicerecognitionplugin.actions.LoadDSLActionGroup"
+               text="Open Voice Recognition DSL">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </group>
+    </actions>
 </idea-plugin>
