@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.sound.sampled.*
 
 
-private const val DAFAULT_MODEL = "/home/viktor/IdeaProjects/intellij-voice-recognition-plugin/vosk-model-en-us-0.22-lgraph"
+private const val DAFAULT_MODEL = "/Users/Mikhail.Shagvaliev/Downloads/vosk-model-en-us-0.22-lgraph"
 
 class VoiceRecognizer : Disposable {
     val isActive: Boolean
@@ -69,18 +69,31 @@ class VoiceRecognizer : Disposable {
                     val b = ByteArray(chunkSize)
                     voiceModel.recognizer.reset()
 
+                    val dataLineInfo = DataLine.Info(SourceDataLine::class.java, voiceModel.format)
+                    val speakers = AudioSystem.getLine(dataLineInfo) as SourceDataLine
+                    speakers.open(voiceModel.format)
+                    speakers.start()
+
                     while (bytesRead <= maxBytes && !voiceModel.exit.get() && voiceModel.isActive.get()) {
                         numBytesRead = voiceModel.microphone.read(b, 0, chunkSize)
                         bytesRead += numBytesRead
                         out.write(b, 0, numBytesRead)
                         voiceModel.recognizer.acceptWaveForm(b, numBytesRead)
+                        with(voiceModel.recognizer) {
+                            println(partialResult)
+                            println(finalResult)
+                            println(result)
+                        }
+                        speakers.write(b, 0, numBytesRead)
                         println(voiceModel.recognizer.partialResult)
 //                        val result = JSONObject(voiceModel.recognizer.partialResult).getString("partial")
 //                        if (result.isNotBlank()) {
 //                            voiceRecognition.complete(result)
 //                        }
                     }
-                    voiceModel.microphone.close();
+                    speakers.drain()
+                    speakers.close()
+                    voiceModel.microphone.close()
                     voiceModel.isActive.set(false)
                 } catch (e: Exception) {
                     e.printStackTrace()
