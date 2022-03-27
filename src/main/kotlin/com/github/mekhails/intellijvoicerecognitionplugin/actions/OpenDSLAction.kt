@@ -21,4 +21,6 @@ class OpenDSLAction(private val configurationFile: File): DumbAwareToggleAction(
     }
 }
 
-private fun String.escapeMnemonic(): String = replace("_", "__").replace("&", "&&")
+private fun String.escapeMnemonic(): String = listOf("_", "&").fold(this) { str, symbolToEscape ->
+    str.replace(symbolToEscape, symbolToEscape.repeat(2))
+}
