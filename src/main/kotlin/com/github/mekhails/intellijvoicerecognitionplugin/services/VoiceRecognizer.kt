@@ -63,7 +63,7 @@ class VoiceRecognizer : Disposable {
                     voiceModel.microphone.open(voiceModel.format)
                     voiceModel.microphone.start()
                     var numBytesRead: Int
-                    val chunkSize = 2048 * 2
+                    val chunkSize = 2048 * 1
                     var bytesRead = 0
                     val maxBytes = 100000000
                     val b = ByteArray(chunkSize)
@@ -79,12 +79,14 @@ class VoiceRecognizer : Disposable {
                         bytesRead += numBytesRead
                         voiceModel.recognizer.acceptWaveForm(b, numBytesRead)
                         with(voiceModel.recognizer) {
-                            val result = JSONObject(partialResult).getString("partial")
-                            if (result.isNotBlank()) {
-                                voiceRecognition.complete(result)
-                            }
+                            println(partialResult)
                         }
                     }
+                    val result = JSONObject(voiceModel.recognizer.partialResult).getString("partial")
+                    if (result.isNotBlank()) {
+                        voiceRecognition.complete(result)
+                    }
+
                     speakers.drain()
                     speakers.close()
                     voiceModel.microphone.close()

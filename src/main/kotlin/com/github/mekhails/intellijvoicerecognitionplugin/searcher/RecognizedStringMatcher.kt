@@ -18,6 +18,8 @@ class RecognizedStringMatcher(
 
     private fun matchWords(recognizedWord: String, actionWord: String) : Float {
         val longestCommonSubstringLength = computeLongestCommonSubstringLength(recognizedWord, actionWord)
+        if (longestCommonSubstringLength == 0) return 0F
+
         return recognizedWord.length.toFloat() / longestCommonSubstringLength.toFloat()
     }
 

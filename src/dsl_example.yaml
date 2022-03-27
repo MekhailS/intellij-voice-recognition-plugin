@@ -1,8 +1,10 @@
 actions:
   - id: "stop_and_run"
     nestedActions:
-      - id: "stop"
       - id: "run"
+
+  - id: "rename"
+    actionString: "rename file"
 
   - id: "commit"
     actionString: "commit"
@@ -11,5 +13,8 @@ actions:
     actionString: "CANONICAL_PATH_TO_RUN_ACTION"
 
 voiceCommands:
+  - phrase: "rename file"
+    actionId: "rename"
+
   - phrase: "commit"
     actionId: "commit"

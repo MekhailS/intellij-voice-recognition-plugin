@@ -75,7 +75,8 @@ class Configuration(
             val nestedActionsIds = actions.flatMap {
                 it.nestedActions?.map { nestedAction -> nestedAction.id } ?: emptyList()
             }
-            nestedActionsIds.any { it !in actionIds}
+            nestedActionsIds.any { it !in actionIds
+            }
         }),
         NO_ACTION_IN_VOICE_COMMAND("No actionId in voiceCommand", {
             voiceCommands.any { it.actionId == null }
@@ -148,7 +149,12 @@ class Configuration(
         for (rootNode in rootNodesWithPhrases.map { it.second }) {
             if (!rootNode.findLeaves()) return null
         }
-        return rootNodesWithPhrases.associate { it.first!! to it.second.foundLeaves.map { leaf -> leaf.data.actionString!! }.toSet() }
+        return rootNodesWithPhrases.associate {
+            val rootNode = it.second
+            val leavesIds = if (rootNode.isLeafe) listOf(rootNode) else rootNode.foundLeaves
+            
+            it.first!! to leavesIds.map { leaf -> leaf.data.actionString!! }.toSet()
+        }
     }
 
     sealed interface ConfigurationValidationResult {
