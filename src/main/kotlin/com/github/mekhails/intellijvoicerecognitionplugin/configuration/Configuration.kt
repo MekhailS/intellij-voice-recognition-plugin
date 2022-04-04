@@ -11,13 +11,17 @@ import java.io.FileNotFoundException
 
 const val OUR_NOTIFICATION_GROUP_ID = "voice_recognition"
 
+const val ELEVEN_ID = "11"
+const val ELEVEN_ACTION_STRING = "11"
+const val ELEVEN_PHRASE = "eleven"
+
 class Configuration(
     var actions: List<ActionDescription> = emptyList(),
     var voiceCommands: List<VoiceCommandDescription> = emptyList()
 ) {
     companion object {
         fun loadAndValidate(file: File): Configuration? {
-            val configuration = loadFromFile(file)
+            val configuration = loadFromFile(file)?.withBundledActions()
             if (configuration == null) {
                 Notification(
                     OUR_NOTIFICATION_GROUP_ID,
@@ -104,6 +108,13 @@ class Configuration(
         return ValidationError.values().firstOrNull { it.rule.invoke(this) }?.let {
             ConfigurationValidationResult.Fail(it)
         } ?: ConfigurationValidationResult.Success(this)
+    }
+
+    private fun withBundledActions(): Configuration {
+        return Configuration(
+            actions + ActionDescription(ELEVEN_ID, null, ELEVEN_ACTION_STRING),
+            voiceCommands + VoiceCommandDescription(ELEVEN_ID, ELEVEN_PHRASE)
+        ).also { it.file = file }
     }
 
     fun computePhrasesToActionStrings(): Map<String, Set<String>>? {

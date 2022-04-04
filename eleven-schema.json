@@ -1,0 +1,57 @@
+{
+  "title": "Eleven",
+  "additionalProperties": true,
+  "type": "object",
+  "properties": {
+    "actions": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "$ref": "#/definitions/action"
+      }
+    },
+    "voiceCommands": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "$ref": "#/definitions/voiceCommand"
+      }
+    }
+  },
+  "definitions": {
+    "action": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Unique ID of an action",
+          "type": "string"
+        },
+        "actionString": {
+          "description": "Action name in Intellij",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "actionString"
+      ]
+    },
+    "voiceCommand": {
+      "type": "object",
+      "properties": {
+        "phrase": {
+          "description": "Phrase to associate with action",
+          "type": "string"
+        },
+        "actionId": {
+          "description": "Id of an action defined in actions section",
+          "type": "string"
+        }
+      },
+      "required": [
+        "phrase",
+        "actionId"
+      ]
+    }
+  }
+}

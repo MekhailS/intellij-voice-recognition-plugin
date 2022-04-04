@@ -15,7 +15,7 @@ import javax.sound.sampled.*
 private const val DEFAULT_MODEL = "/Users/Mikhail.Shagvaliev/Downloads/vosk-model-en-us-0.22-lgraph"
 ///home/viktor/IdeaProjects/intellij-voice-recognition-plugin/vosk-model-en-us-0.22-lgraph
 
-private val MICROPHONE_INITIALIZATION_DURATION = Duration.ofSeconds(10)
+private val MICROPHONE_INITIALIZATION_DURATION = Duration.ofSeconds(15)
 
 class VoiceRecognizer : Disposable {
     val isActive: Boolean get() = voiceModelInitializationTask.getNow(null)?.isActive ?: false

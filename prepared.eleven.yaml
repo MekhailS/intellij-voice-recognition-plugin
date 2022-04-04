@@ -1,0 +1,37 @@
+actions:
+  - id: "rename"
+    actionString: "Rename File"
+
+  - id: "commit"
+    actionString: "Commit"
+
+  - id: "about"
+    actionString: "About"
+
+  - id: "problems"
+    actionString: "Problems"
+
+  - id: "invalidate cache"
+    actionString: "Invalidate"
+
+  - id: "terminal"
+    actionString: "Terminal"
+
+voiceCommands:
+  - phrase: "fuck"
+    actionId: "invalidate cache"
+
+  - phrase: "show problems"
+    actionId: "problems"
+
+  - phrase: "open terminal"
+    actionId: "terminal"
+
+  - phrase: "rename file"
+    actionId: "rename"
+
+  - phrase: "commit"
+    actionId: "commit"
+
+  - phrase: "who are you"
+    actionId: "about"
