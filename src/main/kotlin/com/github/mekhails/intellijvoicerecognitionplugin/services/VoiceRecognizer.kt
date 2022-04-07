@@ -9,13 +9,14 @@ import org.vosk.Recognizer
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.sound.sampled.*
+import javax.sound.sampled.AudioFormat
+import javax.sound.sampled.AudioSystem
+import javax.sound.sampled.DataLine
+import javax.sound.sampled.TargetDataLine
 
+private const val DEFAULT_MODEL = "default_model"
 
-private const val DEFAULT_MODEL = "/Users/Mikhail.Shagvaliev/Downloads/vosk-model-en-us-0.22-lgraph"
-///home/viktor/IdeaProjects/intellij-voice-recognition-plugin/vosk-model-en-us-0.22-lgraph
-
-private val MICROPHONE_INITIALIZATION_DURATION = Duration.ofSeconds(15)
+private val MICROPHONE_INITIALIZATION_DURATION = Duration.ofSeconds(40)
 
 class VoiceRecognizer : Disposable {
     val isActive: Boolean get() = voiceModelInitializationTask.getNow(null)?.isActive ?: false
@@ -49,10 +50,10 @@ class VoiceRecognizer : Disposable {
 
     private inner class VoiceModel : Disposable {
         private val model = Model(DEFAULT_MODEL)
-        private val format = AudioFormat(160000F, 16, 1, true, false)
+        private val format = AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 60000f, 16, 2, 4, 44100f, false)
         private val info = DataLine.Info(TargetDataLine::class.java, format)
         private val microphone: TargetDataLine = AudioSystem.getLine(info) as TargetDataLine
-        private val recognizer: Recognizer = Recognizer(model, 160000F)
+        private val recognizer: Recognizer = Recognizer(model, 120000F)
 
         private val _isActive = AtomicBoolean(false)
         private val exit = AtomicBoolean(false)
