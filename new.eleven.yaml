@@ -1,0 +1,7 @@
+actions:
+  - id: "problems"
+    actionString: "Problems"
+
+voiceCommands:
+  - phrase: "show problems"
+    actionId: "problems"

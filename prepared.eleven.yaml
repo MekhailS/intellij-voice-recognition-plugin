@@ -11,16 +11,10 @@ actions:
   - id: "problems"
     actionString: "Problems"
 
-  - id: "invalidate cache"
-    actionString: "Invalidate"
-
   - id: "terminal"
     actionString: "Terminal"
 
 voiceCommands:
-  - phrase: "fuck"
-    actionId: "invalidate cache"
-
   - phrase: "show problems"
     actionId: "problems"
 

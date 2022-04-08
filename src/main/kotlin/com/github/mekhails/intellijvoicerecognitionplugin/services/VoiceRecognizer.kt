@@ -1,6 +1,7 @@
 package com.github.mekhails.intellijvoicerecognitionplugin.services
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.util.Disposer
 import org.json.JSONObject
@@ -49,6 +50,11 @@ class VoiceRecognizer : Disposable {
     }
 
     private inner class VoiceModel : Disposable {
+
+        init {
+            thisLogger().error("Failed initializing model: NOT SUPPORTED")
+        }
+
         private val model = Model(DEFAULT_MODEL)
         private val format = AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 60000f, 16, 2, 4, 44100f, false)
         private val info = DataLine.Info(TargetDataLine::class.java, format)
